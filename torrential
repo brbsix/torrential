@@ -1,0 +1,290 @@
+#!/bin/bash
+#
+# Manipulate UFW firewall for torrenting
+
+
+allowrules(){
+    # ensure firewall is enabled before continuing
+    ensure-enabled
+
+    local rs=$(rule-status)
+
+    # ensure rule is not already added before continuing
+    if [[ $rs =~ ^(DENY|PARTIAL)$ ]]; then
+
+        # remove rules beforehand if they are already partially added
+        if [[ $rs = PARTIAL ]]; then
+            denyrules
+        fi
+
+        # use an app profile if one exists (otherwise allow the port)
+        if sudo ufw app info transmission &>/dev/null; then
+            local rule="transmission"
+        else
+            local rule="in from any to any port 51413"
+        fi
+
+        # add rule then then reload firewall if it succeeds
+        eval "sudo ufw allow $rule" && reloadufw
+    else
+        information "Already ALLOW"
+    fi
+}
+
+
+denyrules(){
+    # ensure firewall is enabled before continuing
+    ensure-enabled
+
+    local rs=$(rule-status)
+
+    # ensure rule is already fully or partially added before continuing
+    if [[ $rs = ALLOW ]]; then
+
+        # check if there are port rules
+        if grep -Eq '51413 (\(v6\))? +ALLOW IN +Anywhere( \(v6\))?' <<<"$status"; then
+            if sudo ufw delete allow in from any to any port 51413; then
+                local changes=true
+            else
+                local errors=true
+            fi
+        fi
+
+        # check if there are transmission profile rules
+        if grep -Eq 'transmission (\(v6\))? +ALLOW IN +Anywhere( \(v6\))?' <<<"$status"; then
+            if sudo ufw delete allow transmission; then
+                local changes=true
+            else
+                local errors=true
+            fi
+        fi
+
+    elif [[ $rs = PARTIAL ]]; then
+
+        # create an array of added ports (in descending order)
+        readarray -t ports < <(sudo ufw status numbered | grep -oP '(?<=\[)[1-9][0-9]*(?=\] (51413|transmission) (\(v6\))?  )' | sort -nr)
+
+        # delete each port
+        for port in "${ports[@]}"; do
+            if [[ $port =~ ^[1-9][0-9]*$ ]] && sudo ufw delete "$port"; then
+                local changes=true
+            else
+                local errors=true
+            fi
+        done
+
+    else
+        information "Already DENY"
+        return 0
+    fi
+
+    if [[ $changes = true ]]; then
+        reloadufw
+    fi
+
+    if [[ $errors = true ]]; then
+        error "Experienced an unknown error while removing firewall rules"
+        exit 1
+    fi
+}
+
+
+# denyrules(){
+#     # ensure firewall is enabled before continuing
+#     ensure-enabled
+
+#     # ensure rule is already fully or partially added before continuing
+#     if [[ $(rule-status) =~ ^(ALLOW|PARTIAL)$ ]]; then
+
+#         # check if there are port rules
+#         if grep -Eoq "51413 (\(v6\))?  " <<<"$status"; then
+#             if sudo ufw delete allow in from any to any port 51413; then
+#                 local changes=true
+#             else
+#                 local errors=true
+#             fi
+#         fi
+
+#         # check if there are transmission profile rules
+#         if grep -Eoq "transmission (\(v6\))?  " <<<"$status"; then
+#             if sudo ufw delete allow transmission; then
+#                 local changes=true
+#             else
+#                 local errors=true
+#             fi
+#         fi
+
+#         [[ $changes = true ]] && reloadufw
+
+#         if [[ $errors = true ]]; then
+#             error "Experienced an unknown error while removing firewall rules"
+#             exit 1
+#         fi
+#     else
+#         information "Already DENY"
+#     fi
+# }
+
+
+ensure-enabled(){
+    # execute only if firewall is not enabled
+    if ! firewall-state; then
+
+        sudo ufw enable
+
+        # exit if firewall failed to enable
+        if ! firewall-state; then
+            error "Unable to enable firewall"
+            exit 1
+        fi
+    fi
+}
+
+
+error(){
+    echo "ERROR: $@" >&2
+}
+
+
+firewall-state(){
+    # store ufw status in global variable
+    status=$(sudo ufw status 2>/dev/null)
+
+    local state=$(awk 'NR==1 {print $NF}' <<<"$status")
+    if [[ $state = active ]]; then
+        return 0
+    elif [[ $state = inactive ]]; then
+        return 1
+    else
+        error "Experienced an unknown error while checking firewall state"
+        exit 1
+    fi
+}
+
+
+information(){
+    echo "INFO: $@"
+}
+
+
+main(){
+    if (( $# == 1 )) && [[ $1 =~ ^(-h|--help|help)$ ]]; then
+        echo "Usage: ${0##*/} <allow|deny|status>"
+        echo
+        echo "allow               create firewall rule allowing incoming connections"
+        echo "deny                remove firewall rules without prompting"
+        echo "state               display state of firewall"
+        echo "status              display firewall rule status"
+        exit 0
+    elif (( $# == 1 )) && [[ $1 = allow ]]; then
+        allowrules
+    elif (( $# == 1 )) && [[ $1 = deny ]]; then
+        denyrules
+    elif (( $# == 1 )) && [[ $1 = state ]]; then
+        if firewall-state; then
+            echo ACTIVE
+        else
+            echo INACTIVE
+        fi
+    elif (( $# == 1 )) && [[ $1 = status ]]; then
+        if firewall-state; then
+            rule-status
+        else
+            echo INACTIVE
+        fi
+    else
+        error "Invalid command"
+        exit 1
+    fi
+}
+
+
+reloadufw(){
+    sudo ufw reload
+}
+
+
+remove(){
+    if (( $# == 1 )) && [[ $1 =~ ^[1-9][0-9]*$ ]]; then
+        sudo ufw delete "$1"
+    elif (( $# == 2 )) && [[ $1 =~ ^[1-9][0-9]*$ ]] && [[ $2 = --force ]]; then
+        sudo ufw delete "$1" <<< y
+    fi
+}
+
+
+rule-status(){
+    # retry 3 times in case of error
+    for ((i=1; i<=3; i++)); do
+
+        # count port rules
+        local n=$(grep -cE "^51413 (\(v6\))?  " <<<"$status")
+
+        # count profile rules
+        local p=$(grep -cE "^transmission (\(v6\))?  " <<<"$status")
+
+        # check whether there are strictly port or profile rules added
+        if ( (( n == 2 )) && (( p == 0 )) ) \
+        || ( (( n == 0 )) && (( p == 2 )) ); then
+            echo ALLOW
+        # check whether there are no rules added
+        elif (( n == 0 )) && (( p == 0 )); then
+            echo DENY
+        # check whether a mixture of port/profile rules are added
+        else
+            echo PARTIAL
+        fi
+
+        # exit the function so we do not retry
+        return 0
+
+        # update status and wait one second before retrying
+        status=$(sudo ufw status 2>/dev/null)
+        sleep 1
+    done
+
+    # we should only reach this point if there was a serious problem
+    error "Experienced an unknown error while checking rule status"
+    exit 1
+}
+
+
+# rule-status(){
+#     # retry 3 times in case of error
+#     for ((i=1; i<=3; i++)); do
+
+#         # check whether port rules are added
+#         local p4=$(grep -o "^51413  " <<<"$status")
+#         local p6=$(grep -o "^51413 (v6)  " <<<"$status")
+
+#         # check whether profile rules are added
+#         local t4=$(grep -o "^transmission  " <<<"$status")
+#         local t6=$(grep -o "^transmission (v6)  " <<<"$status")
+
+#         # check whether there are strictly port or profile rules added
+#         if [[ ( -n $p4 && -n $p6 && -z $t4 && -z $t6 ) \
+#            || ( -z $p4 && -z $p6 && -n $t4 && -n $t6 ) ]]; then
+#             echo ALLOW
+#         # check whether there are no rules added
+#         elif [[ -z $p4 && -z $p6 && -z $t4 && -z $t6 ]]; then
+#             echo DENY
+#         # check whether a mixture of port/profile rules are added
+#         else
+#             echo PARTIAL
+#         fi
+
+#         # exit the function so we do not retry
+#         return 0
+
+#         # update status and wait one second before retrying
+#         status=$(sudo ufw status 2>/dev/null)
+#         sleep 1
+#     done
+
+#     # we should only reach this point if there was a serious problem
+#     error "Experienced an unknown error while checking rule status"
+#     exit 1
+# }
+
+
+main "$@"

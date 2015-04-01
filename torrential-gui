@@ -1,0 +1,8 @@
+#!/bin/bash
+#
+# Display notication icon to manipulate UFW firewall for torrenting
+
+
+yad --command='torrential-gui-status' --image=security-medium \
+--menu='Allow!sudo torrential allow|Deny!sudo torrential deny|Exit!quit' \
+--no-middle --notification --text="BitTorrent Firewall Tool" &
