@@ -42,7 +42,7 @@ denyrules(){
     if [[ $rs = ALLOW ]]; then
 
         # check if there are port rules
-        if grep -Eq '51413 (\(v6\))? +ALLOW IN +Anywhere( \(v6\))?' <<<"$status"; then
+        if grep -Eq '51413 (\(v6\))? +ALLOW +Anywhere( \(v6\))?' <<<"$status"; then
             if sudo ufw delete allow in from any to any port 51413; then
                 local changes=true
             else
@@ -51,7 +51,7 @@ denyrules(){
         fi
 
         # check if there are transmission profile rules
-        if grep -Eq 'transmission (\(v6\))? +ALLOW IN +Anywhere( \(v6\))?' <<<"$status"; then
+        if grep -Eq 'transmission (\(v6\))? +ALLOW +Anywhere( \(v6\))?' <<<"$status"; then
             if sudo ufw delete allow transmission; then
                 local changes=true
             else
