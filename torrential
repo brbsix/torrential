@@ -252,6 +252,8 @@ error(){
 
 
 firewall-state(){
+    local i state
+
     # retry up to 5 times in the event of failure
     for ((i=1; i<=5; i++)); do
         # store ufw status in global variable
@@ -320,6 +322,8 @@ main(){
 
 
 reloadufw(){
+    local i
+
     # retry reload up to 3 times in the event of failure
     for ((i=1; i<=3; i++)); do
         sudo ufw reload && break
