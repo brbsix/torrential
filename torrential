@@ -301,12 +301,7 @@ main(){
         exit 0
     fi
 
-    # permit a other instance a chance to finish before continuing
-    for ((i=1; i<=10; i++)); do
-        local instances=$(pgrep -cfx 'sudo ${0##*/} (allow|deny)' 2>/dev/null)
-        (( instances == 0 )) && break
-        sleep 0.25
-    done
+    ensure-solo
 
     if (( $# == 1 )) && [[ $1 = allow ]]; then
         allowrules
