@@ -7,7 +7,7 @@ target='transmission-gtk'
 
 if (( $# == 1 )) && [[ $1 =~ ^(-h|--help)$ ]]; then
     cat <<-EOF
-   	Usage: ${0##*/} [ARGUMENT...]
+	Usage: ${0##*/} [ARGUMENT...]
 
 	Wrapper around $target to control UFW firewall rules.
 	EOF
