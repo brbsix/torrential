@@ -222,7 +222,11 @@ main(){
 
 
 reloadufw(){
-    sudo ufw reload
+    # retry reload up to 3 times in the event of failure
+    for ((i=1; i<=3; i++)); do
+        sudo ufw reload && break
+        sleep 1
+    done
 }
 
 
