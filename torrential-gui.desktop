@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=BitTorrent Firewall Tool
+Comment=A tool to control BitTorrent firewall rules
+Icon=security-medium
+Exec=torrential-gui
+NoDisplay=false
+Categories=Network;
+StartupNotify=false
+Terminal=false
