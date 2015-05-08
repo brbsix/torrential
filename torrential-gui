@@ -5,4 +5,4 @@
 
 yad --command='torrential-gui-status' --image=security-medium \
 --menu='Allow!sudo torrential allow|Deny!sudo torrential deny|Exit!quit' \
---no-middle --notification --text="BitTorrent Firewall Tool" &
+--no-middle --notification --text="BitTorrent Firewall Tool"
