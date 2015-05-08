@@ -1,17 +1,19 @@
 #!/bin/bash
 #
-# Wrapper around transmission-gtk to control UFW firewall rules
+# Wrapper around BitTorrent app to control UFW firewall rules
 
+
+target='transmission-gtk'
 
 if (( $# == 1 )) && [[ $1 =~ ^(-h|--help)$ ]]; then
     cat <<-EOF
    	Usage: ${0##*/} [ARGUMENT...]
 
-	Wrapper around transmission-gtk to control UFW firewall rules.
+	Wrapper around $target to control UFW firewall rules.
 	EOF
 	exit 0
 fi
 
 sudo torrential allow
-transmission-gtk "$@"
+"$target" "$@"
 sudo torrential deny
