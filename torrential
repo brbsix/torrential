@@ -44,18 +44,18 @@ denyrules(){
         # check if there are port rules
         if grep -Eq '51413 (\(v6\))? +ALLOW +Anywhere( \(v6\))?' <<<"$status"; then
             if sudo ufw delete allow in from any to any port 51413; then
-                local changes=true
+                local changes='true'
             else
-                local errors=true
+                local errors='true'
             fi
         fi
 
         # check if there are transmission profile rules
         if grep -Eq 'transmission (\(v6\))? +ALLOW +Anywhere( \(v6\))?' <<<"$status"; then
             if sudo ufw delete allow transmission; then
-                local changes=true
+                local changes='true'
             else
-                local errors=true
+                local errors='true'
             fi
         fi
 
@@ -67,9 +67,9 @@ denyrules(){
         # delete each port
         for port in "${ports[@]}"; do
             if [[ $port =~ ^[1-9][0-9]*$ ]] && sudo ufw delete "$port"; then
-                local changes=true
+                local changes='true'
             else
-                local errors=true
+                local errors='true'
             fi
         done
 
@@ -78,11 +78,11 @@ denyrules(){
         return 0
     fi
 
-    if [[ $changes = true ]]; then
+    if [[ $changes = 'true' ]]; then
         reloadufw
     fi
 
-    if [[ $errors = true ]]; then
+    if [[ $errors = 'true' ]]; then
         error "Experienced an unknown error while removing firewall rules"
         exit 1
     fi
@@ -99,24 +99,24 @@ denyrules(){
 #         # check if there are port rules
 #         if grep -Eoq "51413 (\(v6\))?  " <<<"$status"; then
 #             if sudo ufw delete allow in from any to any port 51413; then
-#                 local changes=true
+#                 local changes='true'
 #             else
-#                 local errors=true
+#                 local errors='true'
 #             fi
 #         fi
 
 #         # check if there are transmission profile rules
 #         if grep -Eoq "transmission (\(v6\))?  " <<<"$status"; then
 #             if sudo ufw delete allow transmission; then
-#                 local changes=true
+#                 local changes='true'
 #             else
-#                 local errors=true
+#                 local errors='true'
 #             fi
 #         fi
 
-#         [[ $changes = true ]] && reloadufw
+#         [[ $changes = 'true' ]] && reloadufw
 
-#         if [[ $errors = true ]]; then
+#         if [[ $errors = 'true' ]]; then
 #             error "Experienced an unknown error while removing firewall rules"
 #             exit 1
 #         fi
