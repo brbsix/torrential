@@ -1,20 +1,17 @@
 #!/bin/bash
 #
-# Display BitTorrent firewall status notifications
+# Display UFW firewall status notifications for torrenting
 
 
-main(){
-    local status=$(sudo torrential status)
-    if [[ $status = ALLOW ]]; then
-        notify-send --icon=network-transmit-receive "BitTorrent Firewall" "      is ALLOW"
-    elif [[ $status = DENY ]]; then
-        notify-send --icon=network-idle "BitTorrent Firewall" "      is DENY"
-    elif [[ $status = INACTIVE ]]; then
-        notify-send --icon=dialog-warning "BitTorrent Firewall" "      is INACTIVE"
-    else
-        notify-send --icon=dialog-error "BitTorrent Firewall" "experienced an unknown error"
-    fi
-}
-
-
-main
+status=$(sudo torrential status)
+if [[ $status = ALLOW ]]; then
+    notify-send --icon=network-transmit-receive 'BitTorrent Firewall' '      is ALLOW'
+elif [[ $status = DENY ]]; then
+    notify-send --icon=network-idle 'BitTorrent Firewall' '      is DENY'
+elif [[ $status = INACTIVE ]]; then
+    notify-send --icon=dialog-warning 'BitTorrent Firewall' '      is INACTIVE'
+elif [[ $status = PARTIAL ]]; then
+    notify-send --icon=network-idle 'BitTorrent Firewall' '      is PARTIAL'
+else
+    notify-send --icon=dialog-error 'BitTorrent Firewall' 'experienced an unknown error'
+fi
