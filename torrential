@@ -1,6 +1,13 @@
 #!/bin/bash
 #
-# Manipulate UFW firewall for torrenting
+# Manipulate UFW firewall rules for BitTorrent traffic
+
+
+# define the target app profile
+TN='transmission'
+
+# define the target port number
+TP='51413'
 
 
 allowrules(){
@@ -19,9 +26,9 @@ allowrules(){
 
         # use an app profile if one exists (otherwise allow the port)
         if sudo ufw app info transmission &>/dev/null; then
-            local rule="transmission"
+            local rule="$TN"
         else
-            local rule="in from any to any port 51413"
+            local rule="in from any to any port $TP"
         fi
 
         # add rule then then reload firewall if it succeeds
@@ -42,8 +49,8 @@ denyrules(){
     if [[ $rs = ALLOW ]]; then
 
         # check if there are port rules
-        if grep -Eq '51413 (\(v6\))? +ALLOW +Anywhere( \(v6\))?' <<<"$status"; then
-            if sudo ufw delete allow in from any to any port 51413; then
+        if grep -Eq "$TP (\(v6\))? +ALLOW +Anywhere( \(v6\))?" <<<"$status"; then
+            if sudo ufw delete allow in from any to any port "$TP"; then
                 local changes='true'
             else
                 local errors='true'
@@ -51,8 +58,8 @@ denyrules(){
         fi
 
         # check if there are transmission profile rules
-        if grep -Eq 'transmission (\(v6\))? +ALLOW +Anywhere( \(v6\))?' <<<"$status"; then
-            if sudo ufw delete allow transmission; then
+        if grep -Eq "$TN (\(v6\))? +ALLOW +Anywhere( \(v6\))?" <<<"$status"; then
+            if sudo ufw delete allow "$TN"; then
                 local changes='true'
             else
                 local errors='true'
@@ -241,10 +248,10 @@ remove(){
 
 rule-status(){
     # count port rules
-    local n=$(grep -cE "^51413 (\(v6\))?  " <<<"$status")
+    local n=$(grep -cE "^$TP (\(v6\))?  " <<<"$status")
 
     # count profile rules
-    local p=$(grep -cE "^transmission (\(v6\))?  " <<<"$status")
+    local p=$(grep -cE "^$TN (\(v6\))?  " <<<"$status")
 
     # check whether there are strictly port or profile rules added
     if ( (( n == 2 )) && (( p == 0 )) ) \
@@ -260,6 +267,28 @@ rule-status(){
 
 
 # rule-status(){
+#     # count port rules
+#     local n=$(grep -cE "^51413 (\(v6\))?  " <<<"$status")
+
+#     # count profile rules
+#     local p=$(grep -cE "^transmission (\(v6\))?  " <<<"$status")
+
+#     # check whether there are strictly port or profile rules added
+#     if ( (( n == 2 )) && (( p == 0 )) ) \
+#     || ( (( n == 0 )) && (( p == 2 )) ); then
+#         echo ALLOW
+#     # check whether there are no rules added
+#     elif (( n == 0 )) && (( p == 0 )); then
+#         echo DENY
+#     else
+#         echo PARTIAL
+#     fi
+# }
+
+
+# rule-status(){
+#     local i
+#
 #     # retry up to 3 times in the event of failure
 #     for ((i=1; i<=3; i++)); do
 
