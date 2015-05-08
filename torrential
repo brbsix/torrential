@@ -61,8 +61,15 @@ denyrules(){
 
     elif [[ $rs = PARTIAL ]]; then
 
-        # create an array of added ports (in descending order)
-        readarray -t ports < <(sudo ufw status numbered | grep -oP '(?<=\[)[1-9][0-9]*(?=\] (51413|transmission) (\(v6\))?  )' | sort -nr)
+        declare -al ports
+
+        # create a list of matching ports (in descending order)
+        # local portlist=$(sudo ufw status numbered | sed 's/^\[ \?//;s/\]//' | awk '($2 == "51413") || ($2 == "transmission") {print $1}' | sort -nr)
+        # local portlist=$(sudo ufw status numbered | awk '{ gsub("^\\[ ?|\\]", "") } ($2 == "51413") || ($2 == "transmission") {print $1}' | sort -nr)
+        local portlist=$(sudo ufw status numbered | grep -oP '(?<=\[)[1-9][0-9]*(?=\] (51413|transmission) (\(v6\))?  )' | sort -nr)
+
+        # create an array of the aforementioned ports
+        readarray -t ports <<<"$portlist"
 
         # delete each port
         for port in "${ports[@]}"; do
