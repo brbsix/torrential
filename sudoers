@@ -1,1 +1,1 @@
-USERNAME dv6 = (root) NOPASSWD: /usr/local/bin/torrential
+USERNAME HOSTNAME = (root) NOPASSWD: /usr/local/bin/torrential

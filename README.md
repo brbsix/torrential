@@ -17,7 +17,7 @@ To install `torrential` and `torrential-wrapper`:
 
 Root access is required by `torrential` in order to function. In order to use it without interruption, it is strongly recommended to install a sudoers file. This allows the `torrential-wrapper` to call `sudo torrential` without prompt.
 
-You will need to edit *sudoers* prior to installation. Replace USERNAME with your username. Also, update the path to `torrential` if you will be installing it in a location other than */usr/local/bin*. To install the sudoers file:
+You will need to edit *sudoers* prior to installation. Replace USERNAME and HOSTNAME with your respective values. Also, update the path to `torrential` if you will be installing it in a location other than */usr/local/bin*. To install the sudoers file:
 
     sudo install -m 0440 sudoers /etc/sudoers.d/torrential
 
