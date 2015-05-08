@@ -222,6 +222,30 @@ ensure-enabled(){
 }
 
 
+# permit other running instances a chance to finish before continuing
+ensure-solo(){
+    local i o p processes
+
+    for ((i=1; i<=15; i++)); do
+        o=0
+
+        # load the PIDs of all matching processes into an array
+        processes=( $(pgrep -fx "(sudo )?$PROGRAM (allow|deny)" 2>/dev/null) )
+
+        for p in "${processes[@]}"; do
+            # test whether matching process is not the current process
+            (( p == PPID )) || o=1
+        done
+
+        # break if there are no other running instances
+        (( o == 0 )) && break
+
+        # wait 1/4 sec before continuing
+        sleep 0.25
+    done
+}
+
+
 error(){
     echo "ERROR: $@" >&2
 }
