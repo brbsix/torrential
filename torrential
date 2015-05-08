@@ -303,17 +303,17 @@ main(){
 
     ensure-solo
 
-    if (( $# == 1 )) && [[ $1 = allow ]]; then
+    if (( $# == 1 )) && [[ ${1,,} = allow ]]; then
         allowrules
-    elif (( $# == 1 )) && [[ $1 = deny ]]; then
+    elif (( $# == 1 )) && [[ ${1,,} = deny ]]; then
         denyrules
-    elif (( $# == 1 )) && [[ $1 = state ]]; then
+    elif (( $# == 1 )) && [[ ${1,,} = state ]]; then
         if firewall-state; then
             echo ACTIVE
         else
             echo INACTIVE
         fi
-    elif (( $# == 1 )) && [[ $1 = status ]]; then
+    elif (( $# == 1 )) && [[ ${1,,} = status ]]; then
         if firewall-state; then
             rule-status
         else
