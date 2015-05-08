@@ -281,13 +281,23 @@ information(){
 
 
 main(){
-    if (( $# == 1 )) && [[ $1 =~ ^(-h|--help|help)$ ]]; then
-        echo "Usage: ${0##*/} <allow|deny|status>"
-        echo
-        echo "allow               create firewall rule allowing incoming connections"
-        echo "deny                remove firewall rules without prompting"
-        echo "state               display state of firewall"
-        echo "status              display firewall rule status"
+    PROGRAM=${0##*/}
+
+    if (( $# == 0 )); then
+        echo "$PROGRAM: missing operand" >&2
+        echo "Try '$PROGRAM --help' for more information." >&2
+        exit 1
+    elif (( $# == 1 )) && [[ $1 =~ ^(-h|--help|help)$ ]]; then
+        cat <<-EOF
+		Usage: $PROGRAM <allow|deny|status>
+
+		allow               create firewall rule allowing incoming connections
+		deny                remove firewall rules without prompting
+		state               display state of firewall
+		status              display firewall rule status
+
+		Manipulate UFW firewall rules for BitTorrent traffic.
+		EOF
         exit 0
     fi
 
