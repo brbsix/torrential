@@ -154,18 +154,24 @@ error(){
 
 
 firewall-state(){
-    # store ufw status in global variable
-    status=$(sudo ufw status 2>/dev/null)
+    # retry up to 5 times in the event of failure
+    for ((i=1; i<=5; i++)); do
+        # store ufw status in global variable
+        status=$(sudo ufw status 2>/dev/null)
 
-    local state=$(awk 'NR==1 {print $NF}' <<<"$status")
-    if [[ $state = active ]]; then
-        return 0
-    elif [[ $state = inactive ]]; then
-        return 1
-    else
-        error "Experienced an unknown error while checking firewall state"
-        exit 1
-    fi
+        # local state=$(awk 'NR==1 {print $NF}' <<<"$status")
+        local state=$(awk '/^Status: / {print $2}' <<<"$status")
+        if [[ $state = active ]]; then
+            return 0
+        elif [[ $state = inactive ]]; then
+            return 1
+        fi
+
+        sleep 1
+    done
+
+    error "Experienced an unknown error while checking firewall state"
+    exit 1
 }
 
 
