@@ -240,76 +240,52 @@ remove(){
 
 
 rule-status(){
-    # retry 3 times in case of error
-    for ((i=1; i<=3; i++)); do
+    # count port rules
+    local n=$(grep -cE "^51413 (\(v6\))?  " <<<"$status")
 
-        # count port rules
-        local n=$(grep -cE "^51413 (\(v6\))?  " <<<"$status")
+    # count profile rules
+    local p=$(grep -cE "^transmission (\(v6\))?  " <<<"$status")
 
-        # count profile rules
-        local p=$(grep -cE "^transmission (\(v6\))?  " <<<"$status")
-
-        # check whether there are strictly port or profile rules added
-        if ( (( n == 2 )) && (( p == 0 )) ) \
-        || ( (( n == 0 )) && (( p == 2 )) ); then
-            echo ALLOW
-        # check whether there are no rules added
-        elif (( n == 0 )) && (( p == 0 )); then
-            echo DENY
-        # check whether a mixture of port/profile rules are added
-        else
-            echo PARTIAL
-        fi
-
-        # exit the function so we do not retry
-        return 0
-
-        # update status and wait one second before retrying
-        status=$(sudo ufw status 2>/dev/null)
-        sleep 1
-    done
-
-    # we should only reach this point if there was a serious problem
-    error "Experienced an unknown error while checking rule status"
-    exit 1
+    # check whether there are strictly port or profile rules added
+    if ( (( n == 2 )) && (( p == 0 )) ) \
+    || ( (( n == 0 )) && (( p == 2 )) ); then
+        echo ALLOW
+    # check whether there are no rules added
+    elif (( n == 0 )) && (( p == 0 )); then
+        echo DENY
+    else
+        echo PARTIAL
+    fi
 }
 
 
 # rule-status(){
-#     # retry 3 times in case of error
+#     # retry up to 3 times in the event of failure
 #     for ((i=1; i<=3; i++)); do
 
-#         # check whether port rules are added
-#         local p4=$(grep -o "^51413  " <<<"$status")
-#         local p6=$(grep -o "^51413 (v6)  " <<<"$status")
+#         # count port rules
+#         local n=$(grep -cE "^51413 (\(v6\))?  " <<<"$status")
 
-#         # check whether profile rules are added
-#         local t4=$(grep -o "^transmission  " <<<"$status")
-#         local t6=$(grep -o "^transmission (v6)  " <<<"$status")
+#         # count profile rules
+#         local p=$(grep -cE "^transmission (\(v6\))?  " <<<"$status")
 
 #         # check whether there are strictly port or profile rules added
-#         if [[ ( -n $p4 && -n $p6 && -z $t4 && -z $t6 ) \
-#            || ( -z $p4 && -z $p6 && -n $t4 && -n $t6 ) ]]; then
+#         if ( (( n == 2 )) && (( p == 0 )) ) \
+#         || ( (( n == 0 )) && (( p == 2 )) ); then
 #             echo ALLOW
+#             return 0
 #         # check whether there are no rules added
-#         elif [[ -z $p4 && -z $p6 && -z $t4 && -z $t6 ]]; then
+#         elif (( n == 0 )) && (( p == 0 )); then
 #             echo DENY
-#         # check whether a mixture of port/profile rules are added
-#         else
-#             echo PARTIAL
+#             return 0
 #         fi
-
-#         # exit the function so we do not retry
-#         return 0
 
 #         # update status and wait one second before retrying
 #         status=$(sudo ufw status 2>/dev/null)
 #         sleep 1
 #     done
 
-#     # we should only reach this point if there was a serious problem
-#     error "Experienced an unknown error while checking rule status"
-#     exit 1
+#     echo "PARTIAL"
 # }
 
 
