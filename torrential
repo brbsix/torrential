@@ -68,15 +68,17 @@ denyrules(){
 
     elif [[ $rs = PARTIAL ]]; then
 
-        declare -al ports
+        local port
 
         # create a list of matching ports (in descending order)
-        # local portlist=$(sudo ufw status numbered | sed 's/^\[ \?//;s/\]//' | awk '($2 == "51413") || ($2 == "transmission") {print $1}' | sort -nr)
-        # local portlist=$(sudo ufw status numbered | awk '{ gsub("^\\[ ?|\\]", "") } ($2 == "51413") || ($2 == "transmission") {print $1}' | sort -nr)
-        local portlist=$(sudo ufw status numbered | grep -oP '(?<=\[)[1-9][0-9]*(?=\] (51413|transmission) (\(v6\))?  )' | sort -nr)
+        # local portlist=$(sudo ufw status numbered | sed 's/^\[ \?//;s/\]//' | awk "(\$2 == \"$TP\") || (\$2 == \"$TN\") {print \$1}" | sort -nr)
+        # local portlist=$(sudo ufw status numbered | awk "{ gsub(\"^\\\[ ?|\\\]\", \"\") } (\$2 == \"$TP\") || (\$2 == \"$TN\") {print \$1}" | sort -nr)
+        local portlist=$(sudo ufw status numbered | grep -oP "(?<=\[)[1-9][0-9]*(?=\] ($TP|$TN) (\(v6\))?  )" | sort -nr)
 
         # create an array of the aforementioned ports
-        readarray -t ports <<<"$portlist"
+        # declare -al ports
+        # readarray -t ports <<<"$portlist"
+        local ports=( $portlist )
 
         # delete each port
         for port in "${ports[@]}"; do
@@ -101,6 +103,71 @@ denyrules(){
         exit 1
     fi
 }
+
+
+# denyrules(){
+#     # ensure firewall is enabled before continuing
+#     ensure-enabled
+
+#     local rs=$(rule-status)
+
+#     # ensure rule is already fully or partially added before continuing
+#     if [[ $rs = ALLOW ]]; then
+
+#         # check if there are port rules
+#         if grep -Eq '51413 (\(v6\))? +ALLOW +Anywhere( \(v6\))?' <<<"$status"; then
+#             if sudo ufw delete allow in from any to any port 51413; then
+#                 local changes='true'
+#             else
+#                 local errors='true'
+#             fi
+#         fi
+
+#         # check if there are transmission profile rules
+#         if grep -Eq 'transmission (\(v6\))? +ALLOW +Anywhere( \(v6\))?' <<<"$status"; then
+#             if sudo ufw delete allow transmission; then
+#                 local changes='true'
+#             else
+#                 local errors='true'
+#             fi
+#         fi
+
+#     elif [[ $rs = PARTIAL ]]; then
+
+#         declare -al ports
+#         local port
+
+#         # create a list of matching ports (in descending order)
+#         # local portlist=$(sudo ufw status numbered | sed 's/^\[ \?//;s/\]//' | awk '($2 == "51413") || ($2 == "transmission") {print $1}' | sort -nr)
+#         # local portlist=$(sudo ufw status numbered | awk '{ gsub("^\\[ ?|\\]", "") } ($2 == "51413") || ($2 == "transmission") {print $1}' | sort -nr)
+#         local portlist=$(sudo ufw status numbered | grep -oP '(?<=\[)[1-9][0-9]*(?=\] (51413|transmission) (\(v6\))?  )' | sort -nr)
+
+#         # create an array of the aforementioned ports
+#         readarray -t ports <<<"$portlist"
+
+#         # delete each port
+#         for port in "${ports[@]}"; do
+#             if [[ $port =~ ^[1-9][0-9]*$ ]] && sudo ufw delete "$port"; then
+#                 local changes='true'
+#             else
+#                 local errors='true'
+#             fi
+#         done
+
+#     else
+#         information "Already DENY"
+#         return 0
+#     fi
+
+#     if [[ $changes = 'true' ]]; then
+#         reloadufw
+#     fi
+
+#     if [[ $errors = 'true' ]]; then
+#         error "Experienced an unknown error while removing firewall rules"
+#         exit 1
+#     fi
+# }
 
 
 # denyrules(){
