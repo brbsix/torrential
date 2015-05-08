@@ -1,0 +1,17 @@
+#!/bin/bash
+#
+# Wrapper around transmission-gtk to control UFW firewall rules
+
+
+if (( $# == 1 )) && [[ $1 =~ ^(-h|--help)$ ]]; then
+    cat <<-EOF
+   	Usage: ${0##*/} [ARGUMENT...]
+
+	Wrapper around transmission-gtk to control UFW firewall rules.
+	EOF
+	exit 0
+fi
+
+sudo torrential allow
+transmission-gtk "$@"
+sudo torrential deny
