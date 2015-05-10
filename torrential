@@ -229,8 +229,8 @@ ensure-solo(){
     for ((i=1; i<=15; i++)); do
         o=0
 
-        # load the PIDs of all matching processes into an array
-        processes=( $(pgrep -fx "(sudo )?$PROGRAM (allow|deny)" 2>/dev/null) )
+        # load PIDs of all matching processes into an array (arguments are not case-sensistive)
+        processes=( $(pgrep -fx "(sudo )?$PROGRAM ([Aa][Ll]{2}[Oo][Ww]|[Dd][Ee][Nn][Yy])" 2>/dev/null) )
 
         for p in "${processes[@]}"; do
             # test whether matching process is not the current process
