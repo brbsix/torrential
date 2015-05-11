@@ -26,6 +26,8 @@ Requirements
 
 `torrential` is only compatible with UFW, a frontend for iptables dubbed "The Uncomplicated FireWall".
 
+It also requires **lockfile-progs**, generally available via `sudo apt-get install lockfile-progs`.
+
 Usage
 -----
 
