@@ -153,8 +153,61 @@ information(){
 }
 
 
+# ensure process isn't locked
+lock_acquire(){
+
+    # retry up to 30 times (6 seconds in total)
+    for i in {1..30}; do
+
+        # return successfully if process is unlocked
+        lockfile-check --use-pid "$LOCKFILE" || return 0
+
+        # sleep 1/5 sec before retrying
+        sleep 0.2
+
+    done
+
+    # this point is only reachable upon failure
+    error "Unable to ensure process isn't already locked"
+
+    # warn about lock file if it exists
+    if [[ -f $LOCKFILE.lock ]]; then
+        echo "Please see lock file '$LOCKFILE.lock'" >&2
+    fi
+
+    exit 1
+}
+
+
+lock_create(){
+    # configure trap to remove lock upon exit (except SIGKILL)
+    trap 'lock_remove' EXIT
+
+    # ensure process isn't locked (wait up to 5 seconds if it is) then lock it it
+    lockfile-create --retry 1 --use-pid "$LOCKFILE" && return 0
+
+    # this point is only reachable upon failure
+    error "Unable to create lock file (does it already exist?)"
+
+    # warn about lock file if it exists
+    if [[ -f $LOCKFILE.lock ]]; then
+        echo "Please see lock file '$LOCKFILE.lock'" >&2
+    fi
+
+    exit 1
+}
+
+
+lock_remove(){
+    # remove the lock
+    lockfile-remove "$LOCKFILE"
+}
+
+
 main(){
+    # declare global configs
     PROGRAM=${0##*/}
+    LOCKFILE=$HOME/.$PROGRAM
 
     if (( $# == 0 )); then
         echo "$PROGRAM: missing operand" >&2
@@ -172,29 +225,22 @@ main(){
 		Manipulate UFW firewall rules for BitTorrent traffic.
 		EOF
         exit 0
-    fi
-
-    ensure-solo
-
-    if (( $# == 1 )) && [[ ${1,,} = allow ]]; then
-        allowrules
-    elif (( $# == 1 )) && [[ ${1,,} = deny ]]; then
-        denyrules
-    elif (( $# == 1 )) && [[ ${1,,} = state ]]; then
-        if firewall-state; then
-            echo ACTIVE
-        else
-            echo INACTIVE
-        fi
-    elif (( $# == 1 )) && [[ ${1,,} = status ]]; then
-        if firewall-state; then
-            rule-status
-        else
-            echo INACTIVE
-        fi
+    elif (( $# == 1 )) && [[ ${1,,} =~ ^(allow|deny|state|status)$ ]]; then
+        cmd=${1,,}
     else
         error "Invalid command"
         exit 1
+    fi
+
+    # allow & deny must lock the process during UFW operations
+    if [[ $cmd =~ ^(allow|deny)$ ]]; then
+        lock_create
+        "$cmd"
+        lock_remove
+    # state & status must ensure process is not locked before continuing
+    elif [[ $cmd =~ ^(state|status)$ ]]; then
+        lock_acquire
+        "$cmd"
     fi
 }
 
