@@ -213,9 +213,9 @@ main(){
         echo "$PROGRAM: missing operand" >&2
         echo "Try '$PROGRAM --help' for more information." >&2
         exit 1
-    elif (( $# == 1 )) && [[ $1 =~ ^(-h|--help|help)$ ]]; then
+    elif (( $# == 1 )) && [[ ${1,,} =~ ^(-h|--help|help)$ ]]; then
         cat <<-EOF
-		Usage: $PROGRAM <allow|deny|status>
+		Usage: $PROGRAM COMMAND
 
 		allow               create firewall rule allowing incoming connections
 		deny                remove firewall rules without prompting
@@ -223,12 +223,14 @@ main(){
 		status              display firewall rule status
 
 		Manipulate UFW firewall rules for BitTorrent traffic.
+
+		NOTE: COMMAND is not case-sensistive
 		EOF
         exit 0
     elif (( $# == 1 )) && [[ ${1,,} =~ ^(allow|deny|state|status)$ ]]; then
         cmd=${1,,}
     else
-        error "Invalid command"
+        error "Invalid argument"
         exit 1
     fi
 
