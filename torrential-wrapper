@@ -1,9 +1,15 @@
 #!/bin/bash
 #
-# Wrapper around BitTorrent app to control UFW firewall rules
+# Wrapper around BitTorrent client to control UFW firewall rules
 
 
+# BitTorrent client
 TARGET='transmission-gtk'
+
+# check for other running instances of current program
+isunique(){
+    [[ $(pgrep -f "$0") = $$ ]]
+}
 
 if (( $# == 1 )) && [[ $1 =~ ^(-h|--help)$ ]]; then
     cat <<-EOF
@@ -11,9 +17,15 @@ if (( $# == 1 )) && [[ $1 =~ ^(-h|--help)$ ]]; then
 
 	Wrapper around $TARGET to control UFW firewall rules.
 	EOF
-	exit 0
+    exit 0
 fi
 
-sudo torrential allow
+if isunique; then
+    sudo torrential allow
+fi
+
 "$TARGET" "$@"
-sudo torrential deny
+
+if isunique; then
+    sudo torrential deny
+fi
