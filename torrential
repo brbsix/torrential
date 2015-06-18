@@ -295,9 +295,9 @@ rule_status(){
 
 state(){
     if firewall_state; then
-        echo 'ACTIVE'
+        echo ACTIVE
     else
-        echo 'INACTIVE'
+        echo INACTIVE
     fi
 }
 
