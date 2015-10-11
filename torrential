@@ -120,7 +120,7 @@ ensure_enabled(){
 
 
 error(){
-    echo "ERROR: $@" >&2
+    echo "ERROR: $*" >&2
 }
 
 
@@ -149,7 +149,7 @@ firewall_state(){
 
 
 info(){
-    echo "INFO: $@"
+    echo "INFO: $*"
 }
 
 
