@@ -34,7 +34,7 @@ allow(){
         # add rule then then reload firewall if it succeeds
         eval "sudo ufw allow $rule" && reloadufw
     else
-        information "Already ALLOW"
+        info "Already ALLOW"
     fi
 }
 
@@ -89,7 +89,7 @@ deny(){
         done
 
     else
-        information "Already DENY"
+        info "Already DENY"
         return 0
     fi
 
@@ -148,7 +148,7 @@ firewall_state(){
 }
 
 
-information(){
+info(){
     echo "INFO: $@"
 }
 
