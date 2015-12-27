@@ -182,7 +182,7 @@ lock_acquire(){
 
 lock_create(){
     # configure trap to remove lock upon exit (except SIGKILL)
-    trap 'lock_remove' EXIT
+    trap lock_remove EXIT
 
     # ensure process isn't locked (wait up to 5 seconds if it is) then lock it it
     lockfile-create --retry 1 --use-pid "$LOCKFILE" && return 0
