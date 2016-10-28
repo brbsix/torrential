@@ -34,7 +34,7 @@ allow(){
         # add rule then then reload firewall if it succeeds
         eval "sudo ufw allow $rule" && reloadufw
     else
-        info "Already ALLOW"
+        info 'Already ALLOW'
     fi
 }
 
@@ -89,7 +89,7 @@ deny(){
         done
 
     else
-        info "Already DENY"
+        info 'Already DENY'
         return 0
     fi
 
@@ -98,7 +98,7 @@ deny(){
     fi
 
     if (( errors == 1 )); then
-        error "Experienced an unknown error while removing firewall rules"
+        error 'Experienced an unknown error while removing firewall rules'
         exit 1
     fi
 }
@@ -112,7 +112,7 @@ ensure_enabled(){
 
         # exit if firewall failed to enable
         if ! firewall_state; then
-            error "Unable to enable firewall"
+            error 'Unable to enable firewall'
             exit 1
         fi
     fi
@@ -143,7 +143,7 @@ firewall_state(){
         sleep 1
     done
 
-    error "Experienced an unknown error while checking firewall state"
+    error 'Experienced an unknown error while checking firewall state'
     exit 1
 }
 
@@ -188,7 +188,7 @@ lock_create(){
     lockfile-create --retry 1 --use-pid "$LOCKFILE" && return 0
 
     # this point is only reachable upon failure
-    error "Unable to create lock file (does it already exist?)"
+    error 'Unable to create lock file (does it already exist?)'
 
     # warn about lock file if it exists
     if [[ -f $LOCKFILE.lock ]]; then
