@@ -4,17 +4,19 @@
 
 
 # define the target app profile
-TN='transmission'
+TA='transmission'
 
 # define the target port number
 TP='51413'
 
 
 allow(){
+    local rs rule
+
     # ensure firewall is enabled before continuing
     ensure_enabled
 
-    local rs=$(rule_status)
+    rs=$(rule_status)
 
     # ensure rule is not already added before continuing
     if [[ $rs =~ ^(DENY|PARTIAL)$ ]]; then
@@ -25,10 +27,10 @@ allow(){
         fi
 
         # use an app profile if one exists (otherwise allow the port)
-        if sudo ufw app info "$TN" &>/dev/null; then
-            local rule="$TN"
+        if sudo ufw app info "$TA" &>/dev/null; then
+            rule="$TA"
         else
-            local rule="in from any to any port $TP"
+            rule="in from any to any port $TP"
         fi
 
         # add rule then then reload firewall if it succeeds
@@ -40,12 +42,12 @@ allow(){
 
 
 deny(){
+    local changes errors rs rule rulelist rules
+
     # ensure firewall is enabled before continuing
     ensure_enabled
 
-    local changes errors
-
-    local rs=$(rule_status)
+    rs=$(rule_status)
 
     # ensure rule is already fully or partially added before continuing
     if [[ $rs = ALLOW ]]; then
@@ -60,8 +62,8 @@ deny(){
         fi
 
         # check if there are app profile rules
-        if grep -Eq "$TN (\(v6\))? +ALLOW +Anywhere( \(v6\))?" <<<"$status"; then
-            if sudo ufw delete allow "$TN"; then
+        if grep -Eq "$TA (\(v6\))? +ALLOW +Anywhere( \(v6\))?" <<<"$status"; then
+            if sudo ufw delete allow "$TA"; then
                 changes=1
             else
                 errors=1
@@ -69,19 +71,16 @@ deny(){
         fi
 
     elif [[ $rs = PARTIAL ]]; then
+        # create a list of matching rules (in descending order)
+        # rulelist=$(sudo ufw status numbered | sed 's/^\[ \?//;s/\]//' | awk "(\$2 == \"$TP\") || (\$2 == \"$TA\") {print \$1}" | sort -nr)
+        # rulelist=$(sudo ufw status numbered | awk "{ gsub(\"^\\\[ ?|\\\]\", \"\") } (\$2 == \"$TP\") || (\$2 == \"$TA\") {print \$1}" | sort -nr)
+        rulelist=$(sudo ufw status numbered | grep -oP "(?<=\[)[1-9][0-9]*(?=\] ($TP|$TA) (\(v6\))?  )" | sort -nr)
 
-        local port portlist ports
+        rules=($rulelist)
 
-        # create a list of matching ports (in descending order)
-        # portlist=$(sudo ufw status numbered | sed 's/^\[ \?//;s/\]//' | awk "(\$2 == \"$TP\") || (\$2 == \"$TN\") {print \$1}" | sort -nr)
-        # portlist=$(sudo ufw status numbered | awk "{ gsub(\"^\\\[ ?|\\\]\", \"\") } (\$2 == \"$TP\") || (\$2 == \"$TN\") {print \$1}" | sort -nr)
-        portlist=$(sudo ufw status numbered | grep -oP "(?<=\[)[1-9][0-9]*(?=\] ($TP|$TN) (\(v6\))?  )" | sort -nr)
-
-        ports=($portlist)
-
-        # delete each port
-        for port in "${ports[@]}"; do
-            if [[ $port =~ ^[1-9][0-9]*$ ]] && sudo ufw delete "$port"; then
+        # delete each rule
+        for rule in "${rules[@]}"; do
+            if [[ $rule =~ ^[1-9][0-9]*$ ]] && sudo ufw delete "$rule"; then
                 changes=1
             else
                 errors=1
@@ -268,18 +267,19 @@ remove(){
 
 
 rule_status(){
+    local a p
+
+    # count app profile rules
+    a=$(grep -cE "^$TA (\(v6\))?  " <<<"$status")
+
     # count port rules
-    local n=$(grep -cE "^$TP (\(v6\))?  " <<<"$status")
+    p=$(grep -cE "^$TP (\(v6\))?  " <<<"$status")
 
-    # count profile rules
-    local p=$(grep -cE "^$TN (\(v6\))?  " <<<"$status")
-
-    # check whether there are strictly port or profile rules added
-    if ( (( n == 2 )) && (( p == 0 )) ) \
-    || ( (( n == 0 )) && (( p == 2 )) ); then
+    # check whether there are strictly port or app profile rules added
+    if (( ( a == 2 && p == 0 ) || ( a == 0 && p == 2 ) )); then
         echo ALLOW
     # check whether there are no rules added
-    elif (( n == 0 )) && (( p == 0 )); then
+    elif (( a == 0 && p == 0 )); then
         echo DENY
     else
         echo PARTIAL
