@@ -25,7 +25,7 @@ allow(){
         fi
 
         # use an app profile if one exists (otherwise allow the port)
-        if sudo ufw app info transmission &>/dev/null; then
+        if sudo ufw app info "$TN" &>/dev/null; then
             local rule="$TN"
         else
             local rule="in from any to any port $TP"
@@ -59,7 +59,7 @@ deny(){
             fi
         fi
 
-        # check if there are transmission profile rules
+        # check if there are app profile rules
         if grep -Eq "$TN (\(v6\))? +ALLOW +Anywhere( \(v6\))?" <<<"$status"; then
             if sudo ufw delete allow "$TN"; then
                 changes=1
