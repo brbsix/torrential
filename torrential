@@ -42,7 +42,7 @@ allow(){
 
 
 deny(){
-    local changes errors rs rule rulelist rules
+    local changes='' errors='' rs rule rules
 
     # ensure firewall is enabled before continuing
     ensure_enabled
