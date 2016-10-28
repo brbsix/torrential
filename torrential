@@ -72,11 +72,7 @@ deny(){
 
     elif [[ $rs = PARTIAL ]]; then
         # create a list of matching rules (in descending order)
-        # rulelist=$(sudo ufw status numbered | sed 's/^\[ \?//;s/\]//' | awk "(\$2 == \"$TP\") || (\$2 == \"$TA\") {print \$1}" | sort -nr)
-        # rulelist=$(sudo ufw status numbered | awk "{ gsub(\"^\\\[ ?|\\\]\", \"\") } (\$2 == \"$TP\") || (\$2 == \"$TA\") {print \$1}" | sort -nr)
-        rulelist=$(sudo ufw status numbered | grep -oP "(?<=\[)[1-9][0-9]*(?=\] ($TP|$TA) (\(v6\))?  )" | sort -nr)
-
-        rules=($rulelist)
+        readarray -t rules < <(sudo ufw status numbered | awk -v "ta=$TA" -v "tp=$TP" '($2 == ta || $2 == tp) {print gensub("^\\[|\\]$", "", "g", $1)}' | sort -nr)
 
         # delete each rule
         for rule in "${rules[@]}"; do
@@ -132,8 +128,7 @@ firewall_state(){
         # store ufw status in global variable
         status=$(sudo ufw status 2>/dev/null)
 
-        # state=$(awk 'NR==1 {print $NF}' <<<"$status")
-        state=$(awk '/^Status: / {print $2}' <<<"$status")
+        state=$(awk '$1 == "Status:" {print $2}' <<<"$status")
         if [[ $state = active ]]; then
             return 0
         elif [[ $state = inactive ]]; then
