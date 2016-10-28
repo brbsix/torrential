@@ -226,22 +226,18 @@ main(){
 		Manipulate UFW firewall rules for BitTorrent traffic.
 		EOF
         exit 0
-    elif (( $# == 1 )) && [[ ${1,,} =~ ^(allow|deny|state|status)$ ]]; then
-        local cmd=${1,,}
-    else
-        error "Invalid argument"
-        exit 1
-    fi
-
-    # allow & deny must lock the process during UFW operations
-    if [[ $cmd =~ ^(allow|deny)$ ]]; then
+    elif (( $# == 1 )) && [[ $1 =~ ^(allow|deny)$ ]]; then
+        # allow & deny must lock the process during UFW operations
         lock_create
-        "$cmd"
+        "$1"
         lock_remove
-    # state & status must ensure process is not locked before continuing
-    elif [[ $cmd =~ ^(state|status)$ ]]; then
+    elif (( $# == 1 )) && [[ $1 =~ ^(state|status)$ ]]; then
+        # state & status must ensure process is not locked before continuing
         lock_acquire
-        "$cmd"
+        "$1"
+    else
+        error 'Invalid argument'
+        exit 1
     fi
 }
 
