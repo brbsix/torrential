@@ -136,6 +136,7 @@ firewall_state(){
         fi
 
         sleep 1
+
     done
 
     error 'Experienced an unknown error while checking firewall state'
